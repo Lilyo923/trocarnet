@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trocarnet — le carnet de tes brocantes</title>
+<meta name="description" content="Trocarnet, le carnet personnel pour répertorier toutes les brocantes que tu as visitées.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<button id="menuToggle" class="icon-btn menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="sideMenu">
+  <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+</button>
+
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-tag" aria-hidden="true">🏷️</span>
+    <h1>Trocarnet</h1>
+  </div>
+  <button id="themeToggle" class="icon-btn theme-toggle" aria-label="Passer en thème sombre">
+    <span id="themeIcon" aria-hidden="true">🌙</span>
+  </button>
+</header>
+
+<div id="overlay" class="overlay hidden"></div>
+
+<aside id="sideMenu" class="side-menu" aria-hidden="true" aria-label="Menu">
+  <div class="side-menu-head">
+    <h2>Menu</h2>
+    <button id="closeMenu" class="icon-btn" aria-label="Fermer le menu">✕</button>
+  </div>
+
+  <section class="menu-block">
+    <p class="eyebrow">Statistiques</p>
+    <p class="stat-line"><span id="statTotal">0</span> brocante(s) enregistrée(s)</p>
+  </section>
+
+  <section class="menu-block">
+    <p class="eyebrow">À propos</p>
+    <p class="menu-text">Trocarnet <span class="version-tag">v1.0.0</span></p>
+    <p class="menu-text menu-text-soft">Imaginé par <strong>IMAGINe Studio</strong><br>Développé par <strong>HwR Engine</strong></p>
+  </section>
+
+  <section class="menu-block">
+    <p class="eyebrow">Sauvegarde</p>
+    <p class="menu-text-soft">Tes données sont déjà sauvegardées automatiquement dans ce navigateur. Utilise le code ci-dessous pour les transférer ou faire une sauvegarde de secours.</p>
+
+    <button id="generateCodeBtn" class="btn btn-secondary btn-block">Générer mon code de sauvegarde</button>
+    <textarea id="exportArea" class="save-textarea hidden" readonly rows="4" aria-label="Code de sauvegarde généré"></textarea>
+    <div id="exportActions" class="save-actions hidden">
+      <button id="copyCodeBtn" class="btn btn-ghost">Copier le code</button>
+      <button id="downloadCodeBtn" class="btn btn-ghost">Télécharger (.txt)</button>
+    </div>
+
+    <div class="menu-divider"></div>
+
+    <label class="menu-text" for="importArea">Charger une sauvegarde</label>
+    <textarea id="importArea" class="save-textarea" rows="4" placeholder="Colle ici ton code de sauvegarde…"></textarea>
+    <div class="save-actions">
+      <button id="loadCodeBtn" class="btn btn-secondary">Charger ce code</button>
+      <label class="btn btn-ghost file-btn">
+        Importer un fichier
+        <input type="file" id="importFile" accept=".txt,application/json" hidden>
+      </label>
+    </div>
+  </section>
+</aside>
+
+<main class="app-main">
+
+  <section class="toolbar">
+    <button id="addBtn" class="btn btn-primary">+ Nouvelle brocante</button>
+
+    <div class="filters">
+      <select id="filterYear" class="select" aria-label="Filtrer par année">
+        <option value="">Toutes les années</option>
+      </select>
+      <select id="filterMonth" class="select" aria-label="Filtrer par mois">
+        <option value="">Tous les mois</option>
+        <option value="01">Janvier</option>
+        <option value="02">Février</option>
+        <option value="03">Mars</option>
+        <option value="04">Avril</option>
+        <option value="05">Mai</option>
+        <option value="06">Juin</option>
+        <option value="07">Juillet</option>
+        <option value="08">Août</option>
+        <option value="09">Septembre</option>
+        <option value="10">Octobre</option>
+        <option value="11">Novembre</option>
+        <option value="12">Décembre</option>
+      </select>
+      <select id="filterCategory" class="select" aria-label="Filtrer par type">
+        <option value="">Tous les types</option>
+        <option value="brocante">Brocante généraliste</option>
+        <option value="vide-grenier">Vide-grenier</option>
+        <option value="puces">Marché aux puces</option>
+        <option value="specialisee">Brocante spécialisée</option>
+      </select>
+      <select id="sortBy" class="select" aria-label="Trier">
+        <option value="date-desc">Date (récent → ancien)</option>
+        <option value="date-asc">Date (ancien → récent)</option>
+        <option value="exhibitors-desc">Exposants (+ → -)</option>
+        <option value="exhibitors-asc">Exposants (- → +)</option>
+        <option value="city-asc">Ville (A → Z)</option>
+      </select>
+    </div>
+  </section>
+
+  <section id="emptyState" class="empty-state hidden">
+    <p class="empty-title">Ton carnet est vide.</p>
+    <p class="empty-sub">Clique sur « + Nouvelle brocante » pour enregistrer la première.</p>
+  </section>
+
+  <section id="grid" class="tag-grid" aria-live="polite"></section>
+
+</main>
+
+<dialog id="entryModal" class="entry-modal">
+  <form id="entryForm" novalidate>
+    <div class="modal-head">
+      <h2 id="modalTitle">Nouvelle brocante</h2>
+      <button type="button" id="closeModal" class="icon-btn" aria-label="Fermer">✕</button>
+    </div>
+
+    <input type="hidden" id="entryId">
+    <input type="hidden" id="cityLat">
+    <input type="hidden" id="cityLon">
+
+    <div class="field">
+      <label for="citySearch">Ville <span class="required">*</span></label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="citySearch" autocomplete="off" placeholder="Commence à taper une ville…" required>
+        <ul id="citySuggestions" class="suggestions-list hidden"></ul>
+      </div>
+      <p class="field-hint">Recherche propulsée par OpenStreetMap.</p>
+    </div>
+
+    <div class="field">
+      <label for="streetInput">Rue <span class="optional">(optionnel)</span></label>
+      <input type="text" id="streetInput" placeholder="Ex. Rue de la Barre">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field">
+        <label for="categorySelect">Type de brocante</label>
+        <select id="categorySelect">
+          <option value="brocante">Brocante généraliste</option>
+          <option value="vide-grenier">Vide-grenier</option>
+          <option value="puces">Marché aux puces</option>
+          <option value="specialisee">Brocante spécialisée</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label-row">
+        <label for="exhibitorsRange">Nombre d'exposants</label>
+        <input type="number" id="exhibitorsNumber" class="mini-number" min="0" max="5000" value="0">
+      </div>
+      <input type="range" id="exhibitorsRange" min="0" max="2000" step="10" value="0">
+      <p id="bigStampPreview" class="stamp-preview hidden">🏷️ Grande brocante — plus de 1000 exposants</p>
+    </div>
+
+    <div class="field">
+      <div class="field-label-row">
+        <label for="neighborhoodRange">Ambiance du quartier</label>
+        <span id="neighborhoodLabel" class="neighborhood-value">Mixte</span>
+      </div>
+      <input type="range" id="neighborhoodRange" min="0" max="100" step="1" value="50">
+      <div class="range-ticks">
+        <span>Populaire</span><span>Mixte</span><span>Aisé</span><span>Huppé</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="commentInput">Commentaire <span class="optional">(optionnel)</span></label>
+      <textarea id="commentInput" rows="3" placeholder="Une bonne trouvaille, une ambiance particulière…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="deleteEntryBtn" class="btn btn-danger hidden">Supprimer</button>
+      <div class="modal-actions-right">
+        <button type="button" id="cancelEntryBtn" class="btn btn-ghost">Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<template id="cardTemplate">
+  <article class="tag-card">
+    <span class="tag-hole" aria-hidden="true"></span>
+    <span class="stamp" aria-hidden="true">+1000</span>
+    <div class="tag-card-head">
+      <p class="tag-category"></p>
+      <h3 class="tag-city"></h3>
+      <p class="tag-street"></p>
+    </div>
+    <dl class="tag-meta">
+      <div><dt>Date</dt><dd class="tag-date"></dd></div>
+      <div><dt>Exposants</dt><dd class="tag-exhibitors"></dd></div>
+    </dl>
+    <div class="tag-neighborhood">
+      <div class="gauge"><span class="gauge-fill"></span></div>
+      <p class="gauge-label"></p>
+    </div>
+    <p class="tag-comment"></p>
+    <button type="button" class="tag-edit-btn">Modifier</button>
+  </article>
+</template>
+
+<script src="script.js"></script>
+</body>
+</html>
