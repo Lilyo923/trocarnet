@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#2A241C"/>
+  <g transform="rotate(-14 270 290)">
+    <!-- étiquette kraft -->
+    <path d="M150 230 L 214 166 H 400 a 18 18 0 0 1 18 18 V 396 a 18 18 0 0 1 -18 18 H 214 L 150 350 Z" fill="#E7DCC3"/>
+    <!-- trou -->
+    <circle cx="208" cy="290" r="17" fill="#2A241C"/>
+    <!-- T -->
+    <rect x="262" y="226" width="124" height="30" rx="4" fill="#2A241C"/>
+    <rect x="309" y="226" width="30" height="132" rx="4" fill="#2A241C"/>
+  </g>
+  <!-- ficelle passée dans le trou -->
+  <path d="M112 84 C 128 170, 160 250, 206 300" fill="none" stroke="#C7A165" stroke-width="10" stroke-linecap="round"/>
+  <!-- tampon -->
+  <g transform="rotate(14 372 386)">
+    <circle cx="372" cy="386" r="52" fill="none" stroke="#A6402B" stroke-width="10"/>
+    <circle cx="372" cy="386" r="36" fill="none" stroke="#A6402B" stroke-width="4"/>
+  </g>
+</svg>

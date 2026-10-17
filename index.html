@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trocarnet — le carnet de tes brocantes</title>
 <meta name="description" content="Trocarnet, le carnet personnel pour répertorier toutes les brocantes que tu as visitées.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Trocarnet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EFE7D6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161A" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,8 +50,46 @@
   </section>
 
   <section class="menu-block">
+    <p class="eyebrow">Découvrir</p>
+    <button id="openAchievementsBtn" class="menu-link">
+      <span aria-hidden="true">🏆</span> Succès <span id="menuAchCount" class="menu-link-count">0/18</span>
+    </button>
+    <button id="openChangelogBtn" class="menu-link"><span aria-hidden="true">📜</span> Nouveautés</button>
+    <button id="openTutorialBtn" class="menu-link"><span aria-hidden="true">🎓</span> Revoir le tuto</button>
+  </section>
+
+  <section class="menu-block">
+    <p class="eyebrow">Coopération</p>
+
+    <div id="coopNotConfigured" class="hidden">
+      <p class="menu-text-soft">La synchro entre appareils n'est pas encore branchée. Il faut coller la configuration Firebase dans <code>firebase-config.js</code>.</p>
+    </div>
+
+    <div id="coopIdle" class="hidden">
+      <p class="menu-text-soft">Partage ton carnet avec tes amis. Chacun ajoute ses brocantes et tout le monde voit tout.</p>
+      <button id="createSessionBtn" class="btn btn-secondary btn-block">Créer une session coop</button>
+      <label class="menu-text join-label" for="joinInput">Tu as reçu un lien ou un code ?</label>
+      <div class="join-row">
+        <input type="text" id="joinInput" class="join-input" placeholder="Colle-le ici" autocomplete="off" spellcheck="false">
+        <button id="joinBtn" class="btn btn-ghost">Rejoindre</button>
+      </div>
+    </div>
+
+    <div id="coopActive" class="hidden">
+      <p class="menu-text">Session active <span id="sessionCode" class="version-tag"></span></p>
+      <p id="syncStatusMenu" class="sync-status" data-kind="ok"></p>
+      <div class="save-actions">
+        <button id="copyLinkBtn" class="btn btn-secondary">Copier le lien</button>
+        <button id="shareLinkBtn" class="btn btn-ghost hidden">Partager</button>
+        <button id="syncMenuBtn" class="btn btn-ghost">Actualiser</button>
+      </div>
+      <button id="leaveSessionBtn" class="btn btn-danger btn-block leave-btn">Quitter la session</button>
+    </div>
+  </section>
+
+  <section class="menu-block">
     <p class="eyebrow">À propos</p>
-    <p class="menu-text">Trocarnet <span class="version-tag">v1.0.0</span></p>
+    <p class="menu-text">Trocarnet <span class="version-tag">v1.1.0</span></p>
     <p class="menu-text menu-text-soft">Imaginé par <strong>IMAGINe Studio</strong><br>Développé par <strong>HwR Engine</strong></p>
   </section>
 
@@ -73,7 +121,11 @@
 <main class="app-main">
 
   <section class="toolbar">
-    <button id="addBtn" class="btn btn-primary">+ Nouvelle brocante</button>
+    <div class="toolbar-actions">
+      <button id="addBtn" class="btn btn-primary">+ Nouvelle brocante</button>
+      <button id="syncBtn" class="btn btn-ghost hidden" title="Récupérer les brocantes de la session">⟳ Actualiser</button>
+      <span id="syncChip" class="sync-chip hidden" data-kind="ok">Synchronisé</span>
+    </div>
 
     <div class="filters">
       <select id="filterYear" class="select" aria-label="Filtrer par année">
@@ -196,6 +248,51 @@
   </form>
 </dialog>
 
+<dialog id="achievementsModal" class="entry-modal wide-modal" aria-labelledby="achTitle">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="achTitle">Succès</h2>
+      <button type="button" id="closeAchievements" class="icon-btn" aria-label="Fermer">✕</button>
+    </div>
+    <div class="ach-summary">
+      <p id="achievementsCount" class="ach-count">0 / 18 débloqués</p>
+      <div class="ach-bar"><span id="achievementsBar"></span></div>
+    </div>
+    <div id="achievementsGrid" class="badge-grid"></div>
+  </div>
+</dialog>
+
+<dialog id="changelogModal" class="entry-modal" aria-labelledby="changelogTitle">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="changelogTitle">Quoi de neuf ?</h2>
+      <button type="button" id="closeChangelog" class="icon-btn" aria-label="Fermer">✕</button>
+    </div>
+    <div id="changelogBody"></div>
+    <div class="modal-actions">
+      <button type="button" id="changelogTutoBtn" class="btn btn-ghost">Voir le tuto</button>
+      <button type="button" id="changelogOkBtn" class="btn btn-primary" autofocus>C'est parti</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="tutorialModal" class="entry-modal" aria-labelledby="tutoTitle">
+  <div class="modal-inner tuto">
+    <div class="modal-head">
+      <p id="tutoStepLabel" class="eyebrow tuto-step">1 / 7</p>
+      <button type="button" id="closeTutorial" class="icon-btn" aria-label="Fermer le tuto">✕</button>
+    </div>
+    <div id="tutoVisual" class="tuto-visual" aria-hidden="true">🏷️</div>
+    <h2 id="tutoTitle" class="tuto-title"></h2>
+    <p id="tutoText" class="tuto-text"></p>
+    <div id="tutoDots" class="tuto-dots"></div>
+    <div class="modal-actions">
+      <button type="button" id="tutoPrev" class="btn btn-ghost">Précédent</button>
+      <button type="button" id="tutoNext" class="btn btn-primary" autofocus>Suivant</button>
+    </div>
+  </div>
+</dialog>
+
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <template id="cardTemplate">
@@ -220,6 +317,7 @@
   </article>
 </template>
 
+<script src="firebase-config.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
